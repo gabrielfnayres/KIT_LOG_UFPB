@@ -127,13 +127,13 @@ vector<InsertionInfo> ordenarEmOrdemCrescente(vector<InsertionInfo> &custoInserc
     return CustoOrdenado;
 }
 
-void inserirNaSolucao(Solution &s, vector<int> &CL, vector<InsertionInfo> &custoInsercao, Data &data)
+void inserirNaSolucao(Solution &s, vector<int> &CL, vector<InsertionInfo> &custoInsercao)
 {
     for(int i = 0; i < CL.size(); i++)
     {   
         s.sequence.insert(s.sequence.begin() + custoInsercao[i].arestaRemovida + 1, custoInsercao[i].noInserido);
         s.valorObj += custoInsercao[i].custo;
-        
+        CL.erase(CL.begin() + i + 1);   
     }
 }
 
@@ -149,7 +149,7 @@ Solution Construcao(int &dimensao, Data &data)
         ordenarEmOrdemCrescente(custoInsercao, s.sequence);
         double alpha = (double) rand() / RAND_MAX;
         int selecionado = rand() % ((int) ceil(alpha * custoInsercao.size()));
-        inserirNaSolucao(s, CL, custoInsercao,data);
+        inserirNaSolucao(s, CL, custoInsercao);
     }
     
  
