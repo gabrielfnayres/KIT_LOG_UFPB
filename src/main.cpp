@@ -127,13 +127,19 @@ vector<InsertionInfo> ordenarEmOrdemCrescente(vector<InsertionInfo> &custoInserc
     return CustoOrdenado;
 }
 
-void inserirNaSolucao(Solution &s, vector<int> &CL, vector<InsertionInfo> &custoInsercao)
+void inserirNaSolucao(Solution &s, vector<int> &CL, InsertionInfo &custoInsercao)
 {
-    for(int i = 0; i < CL.size(); i++)
-    {   
-        s.sequence.insert(s.sequence.begin() + custoInsercao[i].arestaRemovida + 1, custoInsercao[i].noInserido);
-        s.valorObj += custoInsercao[i].custo;
-        CL.erase(CL.begin() + i + 1);   
+    
+    s.sequence.insert(s.sequence.begin() + custoInsercao.arestaRemovida + 1, custoInsercao.noInserido);
+    s.valorObj += custoInsercao.custo;
+    
+    for(auto k = CL.begin(); k != CL.end(); k++)
+    {
+        if(*k == custoInsercao.noInserido)
+        {
+            CL.erase(k);
+            break;
+        }
     }
 }
 
@@ -149,7 +155,7 @@ Solution Construcao(int &dimensao, Data &data)
         ordenarEmOrdemCrescente(custoInsercao, s.sequence);
         double alpha = (double) rand() / RAND_MAX;
         int selecionado = rand() % ((int) ceil(alpha * custoInsercao.size()));
-        inserirNaSolucao(s, CL, custoInsercao);
+        inserirNaSolucao(s, CL, custoInsercao[selecionado]);
     }
     
  
@@ -172,6 +178,7 @@ int main(int argc, char** argv)
     cost += data.getDistance(n, 1);
     cout << n << "->" << 1 << endl;
     cout << "Custo de S: "<< cost << endl;
+    
 
     return 0;
 }
