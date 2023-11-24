@@ -4,6 +4,7 @@
 #include <random>
 #include <set>
 
+
 using namespace std;
 
 typedef struct 
@@ -91,7 +92,7 @@ vector<int> escolher3NosAleatorios(Solution &s)
     return nosSelecionados;        
 }
 
-vector<int> nosRestantes(vector<int> &nosselecionados, int &tamanho)
+vector<int> nosRestantes(const vector<int> &nosselecionados, const int &tamanho)
 {
     vector<int> CL(tamanho - (nosselecionados.size() - 1));
 
@@ -152,14 +153,49 @@ Solution Construcao(int &dimensao, Data &data)
     while (!CL.empty())
     {
         vector<InsertionInfo> custoInsercao = CalcularCustoDeInsercao(s, CL, data);
-        ordenarEmOrdemCrescente(custoInsercao, s.sequence);
+        sort(custoInsercao.begin(), custoInsercao.end(), [](InsertionInfo &a, InsertionInfo &b) { return a.custo < b.custo; });
         double alpha = (double) rand() / RAND_MAX;
         int selecionado = rand() % ((int) ceil(alpha * custoInsercao.size()));
         inserirNaSolucao(s, CL, custoInsercao[selecionado]);
     }
-    
- 
 }
+
+bool bestImprovementSwap(Solution *s, Data &data)
+{
+    double bestDelta = 0;
+    int best_i, best_j;
+
+    for(int i = 1; i < s->sequence.size() - 1; i++)
+    {
+        int vi = s->sequence[i];
+        int vi_next = s->sequence[i+1];
+        int vi_prev = s->sequence[i-1];
+
+        for(int j = i + 2; j < s->sequence.size(); j++)
+        {
+            int vj = s->sequence[j];
+            int vj_next = s->sequence[j+1];
+            int vj_prev = s->sequence[j-1];
+
+            double delta = -data.getDistance(vi_prev,vi) - data.getDistance(vi,vi_next) + data.getDistance(vi_prev,vj) + data.getDistance(vj,vi_next) - data.getDistance(vj_prev,vj) - data.getDistance(vj,vj_next) + data.getDistance(vj_prev,vi) + data.getDistance(vi,vj_next); 
+
+            if(delta < bestDelta)
+            {
+                bestDelta = delta;
+                best_i = i;
+                best_j = j;
+            }
+        }
+    }
+    if(bestDelta < 0)
+    {
+        swap(s->sequence[best_i], s->sequence[best_j]);
+        s->valorObj = s->valorObj + bestDelta;
+        return true;
+    }
+    return false;
+}
+
 
 int main(int argc, char** argv)
 {
