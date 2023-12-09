@@ -429,17 +429,17 @@ void BuscaLocal(Solucao *s, Data &data)
     }
 }
 
-Solucao Pertubacao(Solucao s, Data &data)
-{
-    Solucao pert = s;
+//Solucao Pertubacao(Solucao s, Data &data)
+//{
+  //  Solucao pert = s;
 
-    int n = pert.sequence.size();
-    int t1 = 2;
-    int t2 = (n - 1)/10;
+//    int n = pert.sequence.size();
+  //  int t1 = 2;
+    //int t2 = (n - 1)/10;
 
 
-    return pert;
-}
+    //return pert;
+//}
 
 
 Solucao ILS(int maxIter, int maxIterIls,  Data &data)
@@ -462,7 +462,7 @@ Solucao ILS(int maxIter, int maxIterIls,  Data &data)
                 best = s;
                 iterILS = 0;
             }
-            s = Perturbacao(best, data);
+          //  s = Perturbacao(best, data);
             iterILS++;
         }
 
@@ -476,9 +476,22 @@ Solucao ILS(int maxIter, int maxIterIls,  Data &data)
 
 int main(int argc, char** argv) {
 
+    int maxIter = 50;
+    int maxIterIls;
+    Solucao best;
+    double custo = 0.0;
     auto data = Data(argc, argv[1]);
     data.read();
     size_t n = data.getDimension();
+
+    if(n >= 150)
+    {
+        maxIterIls = n/2;
+    }
+    else
+    {
+        maxIterIls = n;
+    }
 
     cout << "Dimension: " << n << endl;
     cout << "DistanceMatrix: " << endl;
@@ -486,14 +499,11 @@ int main(int argc, char** argv) {
 
 
     cout << "Exemplo de Solucao s = ";
-    double cost = 0.0;
-    for (size_t i = 1; i < n; i++) {
-        cout << i << " -> ";
-        cost += data.getDistance(i, i+1);
-    }
-    cost += data.getDistance(n, 1);
+    exibirSolucao(&best);
+    calcularValorObj(&best, data);
+    custo += data.getDistance(n, 1);
     cout << n << " -> " << 1 << endl;
-    cout << "Custo de S: " << cost << endl;
+    cout << "Custo de S: " << custo << endl;
 
     return 0;
 }
