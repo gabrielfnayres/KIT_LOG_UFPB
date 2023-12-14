@@ -549,11 +549,11 @@ int main(int argc, char** argv)
     //cout << "Exemplo de Solucao s = ";
       
     best =  Construcao(data, n);
-    cto = best.valorObj;
     // calcularValorObj(&best, data);
     //cout << n << " -> " << 1 << endl;
     exibirSolucao(&best);
-    cout << "COST: " << cto << endl;
+    calcularValorObj(best, data);
+    
 
     return 0;
 }
