@@ -151,15 +151,7 @@ Solucao Construcao(Data &data, int &dim)
         alpha = (double) (rand() % RAND_MAX + 1)/ RAND_MAX;
         alpha += 0.0000000001;
         sla =  (int) (alpha * custoInsercao.size());
-        if(sla == 0)
-        {
-            selecionado = 0;
-        }
-        else
-        {
-            selecionado = rand() % sla;
-        }
-        
+        selecionado = rand() % sla;
         InserirNaSolucao(s, custoInsercao[selecionado], CL);
     }
     return s;
