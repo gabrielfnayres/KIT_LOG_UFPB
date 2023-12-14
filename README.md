@@ -1,2 +1,2 @@
-<h>Travelling Salesman Problem<\h>
+TSP
 
