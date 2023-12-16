@@ -173,26 +173,20 @@ bool bestImprovementSwap(Solucao &s, Data &data)
 
     for( i = 1; i < s.sequence.size() - 1; i++)
     {
-        int vi = s.sequence[i];
-        int vi_next = s.sequence[i+1];
-        int vi_prev =  s.sequence[i-1];
-
+        
         for( j = i + 1; j < s.sequence.size() - 1; j++)
         {
-            int vj = s.sequence[j];
-            int vj_next = s.sequence[j+1];
-            int vj_prev = s.sequence[j-1];
             
             if(j-i == 1)
             {
-                delta = -data.getDistance(vi_prev, vi) - data.getDistance(vj,vj_next)
-                        +data.getDistance(vi_prev, vj) + data.getDistance(vj, vi_next);
+                delta = -data.getDistance(s.sequence[i-1], s.sequence[i]) - data.getDistance(s.sequence[j],s.sequence[j+1])
+                        +data.getDistance(s.sequence[i-1], s.sequence[j]) + data.getDistance(s.sequence[j], s.sequence[i+1]);
             }
             else{
-                delta = -data.getDistance(vi_prev, vi) - data.getDistance(vi, vi_next)
-                        - data.getDistance(vj_prev, vj) - data.getDistance(vj, vj_next)
-                        +data.getDistance(vi_prev, vj) + data.getDistance(vj, vi_next)
-                        +data.getDistance(vj_prev, vi) + data.getDistance(vi, vj_next);
+                delta = -data.getDistance(s.sequence[i-1], s.sequence[i]) - data.getDistance(s.sequence[i], s.sequence[i+1])
+                        - data.getDistance(s.sequence[j-1], s.sequence[j]) - data.getDistance(s.sequence[j], s.sequence[j+1])
+                        +data.getDistance(s.sequence[i-1], s.sequence[j]) + data.getDistance(s.sequence[j] , s.sequence[i+1])
+                        +data.getDistance(s.sequence[j-1], s.sequence[i]) + data.getDistance(s.sequence[i], s.sequence[j+1]);
             }
             if(delta < best_delta)
             {
@@ -220,22 +214,17 @@ bool bestImprovement2Opt(Solucao &s, Data &data)
 
     for(i = 0; i < s.sequence.size() - 1; i++)
     {
-        int vi = s.sequence[i];
         
-        int vi_next = s.sequence[i+1];
-
         for(j = i + 2; j < s.sequence.size() - 1; j++)
         {
-            int vj = s.sequence[j];
             
-            int vj_next = s.sequence[j+1];
             if(i == 0 && j == s.sequence.size() - 1)
             {
                 continue;
             }
 
-            delta =  - data.getDistance(vi, vi_next) - data.getDistance(vj, vj_next)
-                     + data.getDistance(vi, vj)  + data.getDistance(vi_next, vj_next);
+            delta =  - data.getDistance(s.sequence[i], s.sequence[i+1]) - data.getDistance(s.sequence[j], s.sequence[j+1])
+                     + data.getDistance(s.sequence[i], s.sequence[j])  + data.getDistance(s.sequence[i+1], s.sequence[j+1]);
 
             if(delta < best_delta)
             {
@@ -300,10 +289,10 @@ bool bestImprovementOrOpt(Solucao &s, Data &data, int n)
     }
     if(best_delta < 0)
     {
-        if(best_i > best_j)
+        if(best_j > best_i)
         {
             s.sequence.insert(s.sequence.begin() + best_j, s.sequence[best_i]);
-            s.sequence.erase(s.sequence.begin() + best_i + 1);
+            s.sequence.erase(s.sequence.begin() + best_i);
         }
         else
         {
@@ -333,7 +322,7 @@ bool bestImprovementOrOpt(Solucao &s, Data &data, int n)
                         - data.getDistance(s.sequence[i], s.sequence[i+1]) + data.getDistance(s.sequence[j-1], s.sequence[j+2])
                         + data.getDistance(s.sequence[i], s.sequence[j]) + data.getDistance(s.sequence[j+1], s.sequence[i+1]);
             }
-            else if(i == j-1)
+            else if(i == j-2)
             {
                 delta = -data.getDistance(s.sequence[i-1], s.sequence[i]) - data.getDistance(s.sequence[i+1], s.sequence[j])
                         + data.getDistance(s.sequence[i-1], s.sequence[j]) + data.getDistance(s.sequence[i+1], s.sequence[j+1]);
@@ -342,6 +331,7 @@ bool bestImprovementOrOpt(Solucao &s, Data &data, int n)
             {
                 continue;
             }
+
 
             if(delta < best_delta)
             {
@@ -353,22 +343,81 @@ bool bestImprovementOrOpt(Solucao &s, Data &data, int n)
     }
     if(best_delta < 0)
     {
-        if(best_j > best_i)
+        if(best_j > best_i) // depois do j
         {
 
-            s.sequence.insert(s.sequence.begin() + best_j, s.sequence[best_i]);
-            s.sequence.insert(s.sequence.begin() + best_j + 1, s.sequence[best_i + 1]);
-            s.sequence.erase(s.sequence.begin() + best_i);
+            s.sequence.insert(s.sequence.begin() + best_j + 1, s.sequence[best_i]);
+            s.sequence.insert(s.sequence.begin() + best_j + 2, s.sequence[best_i + 1]);
             s.sequence.erase(s.sequence.begin() + best_i + 1);
+            s.sequence.erase(s.sequence.begin() + best_i);
         }
         else
         {
-            s.sequence.insert(s.sequence.begin() + best_j - 1, s.sequence[best_i]);
-            s.sequence.insert(s.sequence.begin() + best_j, s.sequence[best_i + 1]);
+            s.sequence.insert(s.sequence.begin() + best_j, s.sequence[best_i]);
+            s.sequence.insert(s.sequence.begin() + best_j + 1, s.sequence[best_i + 2]);
+            s.sequence.erase(s.sequence.begin() + best_i + 2);
+            s.sequence.erase(s.sequence.begin() + best_i + 2);
+        }       
+
+        s.valorObj += best_delta;
+        return true;
+    }
+    return false;
+
+    case 3: //OR-OPT3
+    for(i =  1; i < s.sequence.size()- 3; i++)
+    {
+        for(j = 1; j < s.sequence.size() - 3; j++)
+        {
+            if(j > i)
+            {
+                delta = -data.getDistance(s.sequence[i-1], s.sequence[i]) - data.getDistance(s.sequence[i+2], s.sequence[i+3])
+                        - data.getDistance(s.sequence[j], s.sequence[j + 1]) + data.getDistance(s.sequence[i-1],s.sequence[i+3])
+                        + data.getDistance(s.sequence[j], s.sequence[i]) + data.getDistance(s.sequence[i+2], s.sequence[j+1]);
+            }
+            else if(j < i)
+            {
+                delta = -data.getDistance(s.sequence[j-1], s.sequence[j]) - data.getDistance(s.sequence[j+2], s.sequence[j+3])
+                        - data.getDistance(s.sequence[i], s.sequence[i+1]) + data.getDistance(s.sequence[j-1], s.sequence[j+3])
+                        + data.getDistance(s.sequence[i], s.sequence[j]) + data.getDistance(s.sequence[j+2], s.sequence[i+1]);
+            }
+            else if(j == i-3)
+            {
+                delta = -data.getDistance(s.sequence[i-1], s.sequence[i]) - data.getDistance(s.sequence[i+2], s.sequence[j])
+                        + data.getDistance(s.sequence[i-1], s.sequence[j]) + data.getDistance(s.sequence[i+2], s.sequence[j+1]);
+            }
+            else
+            {
+                continue;
+            }
+            if(delta < best_delta)
+            {
+                best_delta = delta;
+                best_i = i;
+                best_j = j;
+            }
+        }
+    }
+    if(best_delta < 0)  //inserindo sempre depois do j
+    {
+        if(best_j > best_i)
+        {
+            s.sequence.insert(s.sequence.begin() + best_j + 1, s.sequence[best_i]);
+            s.sequence.insert(s.sequence.begin() + best_j + 2, s.sequence[best_i + 1]);
+            s.sequence.insert(s.sequence.begin() + best_j + 3, s.sequence[best_i + 2]);
+            s.sequence.erase(s.sequence.begin() + best_i+2);
             s.sequence.erase(s.sequence.begin() + best_i + 1);
             s.sequence.erase(s.sequence.begin() + best_i);
-        }   
-
+        }
+        else
+        {
+            s.sequence.insert(s.sequence.begin() + best_j, s.sequence[best_i]);
+            s.sequence.insert(s.sequence.begin() + best_j + 1, s.sequence[best_i + 1]);
+            s.sequence.insert(s.sequence.begin() + best_j + 2, s.sequence[best_i + 2]);
+            s.sequence.erase(s.sequence.begin() + best_i + 3);
+            s.sequence.erase(s.sequence.begin() + best_i + 3);
+            s.sequence.erase(s.sequence.begin() + best_i + 3);
+        }
         s.valorObj += best_delta;
         return true;
     }
@@ -377,39 +426,42 @@ bool bestImprovementOrOpt(Solucao &s, Data &data, int n)
     return false;
 }
 
-void BuscaLocal(Solucao &s, Data &data)
+void BuscaLocal(Solucao &s, Data &data, int a)
 {
-    vector<int> NL = {1, 2, 3};  
+    vector<int> NL = {1, 2, 3, 4, 5};  
     bool improved = false;
-    
-    while(NL.empty() == false)
+    int n;
+    int iterA = 0;
+    const int maxiter = a;
+    while(NL.empty() == false && iterA < maxiter)
     {
-        int n = rand() % NL.size();
-
+        n = rand() % NL.size();
+  
         switch (NL[n])
         {
             case 1:
-                improved = bestImprovementSwap(s, data);
+                improved = bestImprovementSwap(s, data); // SWAP
                 break;
             case 2:
-                improved = bestImprovement2Opt(s, data);
+                improved = bestImprovement2Opt(s, data); // 2-OPT
                 break;
             case 3:
-               improved = bestImprovementOrOpt(s, data, 1);
+               improved = bestImprovementOrOpt(s, data, 1); // OR-OPT- REINSERTION
                break;
-           case 4:
-               improved = bestImprovementOrOpt(s, data, 2);
-               break;
-            // case 5:
-            // {
-            //     improved = bestImprovementOrOpt(s, data, 3);
-            //     break;
-            // }
+            case 4:
+                improved = bestImprovementOrOpt(s, data, 2); // OR-OPT2
+                break;
+            case 5:
+                improved = bestImprovementOrOpt(s, data, 3); // OR-OPT3
+                break;
         }
-        bool improved = false;
+
+         
+        
         if(improved)
         {
-            NL = {1, 2, 3};
+            NL = {1, 2, 3, 4, 5};
+            iterA++;
         }
         else
         {
@@ -425,7 +477,7 @@ Solucao Perturbacao(const Solucao s, Data &data)
     int i = 0, j = 0;
 
     int n = pert.sequence.size();
-    int V = (n-1)/10 + 1; // no minínimo 2
+    int V = (n-1)/10 + 2; // no minínimo 2
 
     int tam1, tam2;
     bool mesmo = 1;
@@ -434,8 +486,8 @@ Solucao Perturbacao(const Solucao s, Data &data)
     //tamanho das subsequencias
     if(V > 2)
     {
-        tam1 = rand() % ((V-1)/10) + 2;
-        tam2 = rand() % ((V-1)/10) + 2;
+        tam1 = (rand() % ((V-1)/10)) + 2;
+        tam2 = (rand() % ((V-1)/10)) + 2;
     }
     
     //escolher os indices de inicio das subsequencias
@@ -520,7 +572,7 @@ Solucao ILS(int maxIter, int maxIterIls,int n,  Data &data)
         while (iterILS <= maxIterIls)
         {
             
-            BuscaLocal(s, data);
+            BuscaLocal(s, data, n);
             calcularValorObj(&s, data);
             if(s.valorObj < best.valorObj)
             {
@@ -565,15 +617,12 @@ int main(int argc, char** argv)
     // data.printMatrixDist();
 
     //cout << "Exemplo de Solucao s = ";
-
-    for(int i = 0; i < 10; i++)
+    for(int k = 0; k < 10; k++)
     {
         ilts = ILS(50, maxIterIls, n, data);
     }
-
-    
     exibirSolucao(&ilts);
     calcularValorObj(&ilts, data);
-
+    
     return 0;
 }
