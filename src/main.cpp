@@ -32,17 +32,19 @@ void exibirSolucao(Solucao *s)
     cout << s->sequence.back() << endl;
 }
 
-void calcularValorObj(Solucao s, Data &data)
+void calcularValorObj(Solucao *s, Data &data)
 {
-    s.valorObj = 0.0;
-    for(int i = 0; i < s.sequence.size() - 1; i++)
+    s->valorObj = 0.0;
+    for(int i = 0; i < s->sequence.size() - 1; i++)
     {
-        s.valorObj += data.getDistance(s.sequence[i], s.sequence[i+1]);
+        s->valorObj += data.getDistance(s->sequence[i], s->sequence[i+1]);
     }
-    cout << "Custo de S: " << s.valorObj << endl;
+
+    cout << s->valorObj << endl;
+
 }
 
-vector<InsertionInfo> calcularCustoInsercao(Solucao& s, vector<int>& CL, Data &data)
+vector<InsertionInfo> calcularCustoInsercao(Solucao s, vector<int>& CL, Data &data)
 {
     vector<InsertionInfo> custoInsercao((s.sequence.size()-1)*CL.size());
 
@@ -137,11 +139,11 @@ bool caroSouN(InsertionInfo a, InsertionInfo b)
     return (a.custo < b.custo);
 }
 
-Solucao Construcao(Data &data, int &dim)
+Solucao Construcao(Data &data, int dim)
 {
     double alpha;
     int selecionado, sla;
-    Solucao s = {{}, 0.0};
+    Solucao s = {{1,1}, 0.0};
     s.sequence = escolher3NosAleatorios(dim);
     vector <int> CL = restoDosNos(s.sequence, dim);
     while(!CL.empty())
@@ -151,286 +153,233 @@ Solucao Construcao(Data &data, int &dim)
         alpha = (double) (rand() % RAND_MAX + 1)/ RAND_MAX;
         alpha += 0.0000000001;
         sla =  (int) (alpha * custoInsercao.size());
-        selecionado = rand() % sla;
+        if(sla == 0)
+        {
+            selecionado = 0;
+        }
+        else{
+            selecionado = rand() % sla;
+        }
         InserirNaSolucao(s, custoInsercao[selecionado], CL);
     }
     return s;
 }
 
-bool bestImprovementSwap(Solucao *s, Data &data)
+bool bestImprovementSwap(Solucao &s, Data &data)
 {
-    double bestDelta = 0;
     int best_i, best_j;
-    double delta;
+    int i, j;
+    double delta, best_delta = 0.0;
 
-    for(int i = 1; i < s->sequence.size() -  1; i++)
+    for( i = 1; i < s.sequence.size() - 1; i++)
     {
-        int vi = s->sequence[i];
-        int vi_next = s->sequence[i+1];
-        int vi_prev = s->sequence[i-1];
-        
-        for(int j = i + 1; j < s->sequence.size()-1; j++)
-        {
-            int vj = s->sequence[j];
-            int vj_next = s->sequence[j+1];
-            int vj_prev = s->sequence[j-1];
+        int vi = s.sequence[i];
+        int vi_next = s.sequence[i+1];
+        int vi_prev =  s.sequence[i-1];
 
-            if(j > i)
-            {
-                delta = -data.getDistance(vi_prev, vi) - data.getDistance(vi, vi_next) - data.getDistance(vj_prev, vj)
-                        - data.getDistance(vj, vj_next) + data.getDistance(vi_prev, vj) + data.getDistance(vj, vi_next)
-                        + data.getDistance(vj_prev, vi) + data.getDistance(vi, vj_next);
-            }
-            else if(j - i == 1 || i - j == 1)
-            {
-                delta = -data.getDistance(vi_prev, vi) - data.getDistance(vj, vj_next) + data.getDistance(vi_prev, vj)
-                        +data.getDistance(vi, vj_next);
-            }
-            else if(i == j)
-            {
-                delta = 0;
-                continue;
-            }
+        for( j = i + 1; j < s.sequence.size() - 1; j++)
+        {
+            int vj = s.sequence[j];
+            int vj_next = s.sequence[j+1];
+            int vj_prev = s.sequence[j-1];
             
-            if(delta < bestDelta)
+            if(j-i == 1)
             {
-                bestDelta = delta;
+                delta = -data.getDistance(vi_prev, vi) - data.getDistance(vj,vj_next)
+                        +data.getDistance(vi_prev, vj) + data.getDistance(vj, vi_next);
+            }
+            else{
+                delta = -data.getDistance(vi_prev, vi) - data.getDistance(vi, vi_next)
+                        - data.getDistance(vj_prev, vj) - data.getDistance(vj, vj_next)
+                        +data.getDistance(vi_prev, vj) + data.getDistance(vj, vi_next)
+                        +data.getDistance(vj_prev, vi) + data.getDistance(vi, vj_next);
+            }
+            if(delta < best_delta)
+            {
+                best_delta = delta;
                 best_i = i;
                 best_j = j;
             }
         }
-    }   
-
-    if(bestDelta < 0)
+    }
+    if(best_delta < 0)
     {
-        swap(s->sequence[best_i], s->sequence[best_j]);
-        s->valorObj = s->valorObj + bestDelta;
+        swap(s.sequence[best_i], s.sequence[best_j]);
+        s.valorObj += best_delta;
         return true;
     }
     return false;
 }
 
-bool bestImprovement2Opt(Solucao *s, Data &data)
+
+bool bestImprovement2Opt(Solucao &s, Data &data)
 {
-
-    double bestDelta = 0;
     int best_i, best_j;
-    double delta;
+    int i, j;
+    double delta, best_delta = 0.0;
 
-    for(int i = 1; i < s->sequence.size() - 2; i++)
+    for(i = 0; i < s.sequence.size() - 1; i++)
     {
-        int vi = s->sequence[i];
-        int vi_next = s->sequence[i+1];
+        int vi = s.sequence[i];
+        
+        int vi_next = s.sequence[i+1];
 
-        for(int j = i + 2; j < s->sequence.size() -1; j++)
+        for(j = i + 2; j < s.sequence.size() - 1; j++)
         {
-            int vj = s->sequence[j];
-            int vj_next = s->sequence[j+1];
-
-            if(i == 0 || j == s->sequence.size() - 1)
+            int vj = s.sequence[j];
+            
+            int vj_next = s.sequence[j+1];
+            if(i == 0 && j == s.sequence.size() - 1)
             {
                 continue;
             }
 
+            delta =  - data.getDistance(vi, vi_next) - data.getDistance(vj, vj_next)
+                     + data.getDistance(vi, vj)  + data.getDistance(vi_next, vj_next);
 
-            delta =  -data.getDistance(vi, vi_next) - data.getDistance(vj, vj_next) 
-                     + data.getDistance(vj, vi_next) + data.getDistance(vi, vj_next);
-
-
-            if(delta < bestDelta)
+            if(delta < best_delta)
             {
-                bestDelta = delta;
+                best_delta = delta;
                 best_i = i;
                 best_j = j;
             }
         }
     }
-
-    if(bestDelta < 0)
+    if(best_delta < 0)
     {
-        reverse(s->sequence.begin() + best_i, s->sequence.begin() + best_j);
-        s->valorObj = s->valorObj + bestDelta;
+        reverse(s.sequence.begin() + best_i + 1, s.sequence.begin() + best_j + 1);
+        s.valorObj += best_delta;
         return true;
     }
     return false;
 }
 
-bool bestImprovementOrOpt(Solucao *s, Data &data, int n)
+bool bestImprovementOrOpt(Solucao &s, Data &data, int n)
 {
 
-    double bestDelta = 0;
+    double best_delta = 0.0;
     int best_i, best_j;
+    int i, j;
     double delta;
 
     switch (n)
     {
-        case 1: //REINSERTION
-            for (int i = 1; i < s->sequence.size(); i++) {
-                int vi = s->sequence[i];
-                int vi_prev = s->sequence[i - 1];
-                int vi_next = s->sequence[i + 1];
-
-                for (int j = 1; j < s->sequence.size(); j++) {
-                    int vj = s->sequence[j];
-                    int vj_next = s->sequence[j + 1];
-                    int vj_prev = s->sequence[j - 1];
-
-                    if (j < i) {
-                        delta = -data.getDistance(vi_prev, vi) - data.getDistance(vi, vi_next) -
-                                data.getDistance(vj_prev, vj)
-                                + data.getDistance(vi_prev, vi_next) + data.getDistance(vi, vj) +
-                                data.getDistance(vj_prev, vi);
-                    } else if (j > i) {
-                        delta = -data.getDistance(vi_prev, vi) - data.getDistance(vi, vi_next) -
-                                data.getDistance(vj, vj_next)
-                                + data.getDistance(vi_prev, vi_next) + data.getDistance(vi, vj) +
-                                data.getDistance(vi, vj_next);
-                    } else if (i == j - 1) {
-
-                        delta = -data.getDistance(vi_prev, vi) - data.getDistance(vj, vj_next) +
-                                data.getDistance(vi, vj)
-                                + data.getDistance(vi_prev, vj) + data.getDistance(vi, vj_next);
-                    }
-
-                    if (delta < bestDelta) {
-                        bestDelta = delta;
-                        best_i = i;
-                        best_j = j;
-                    }
-                }
+    case 1://REINSERTION 
+    for(i = 1; i < s.sequence.size() - 1; i++)
+    {
+        for(j = 1; j < s.sequence.size() - 1; j++)
+        {
+            if(j > i)
+            {
+                delta = -data.getDistance(s.sequence[i-1], s.sequence[i]) - data.getDistance(s.sequence[i], s.sequence[i+1])
+                        - data.getDistance(s.sequence[j], s.sequence[j+1]) + data.getDistance(s.sequence[i], s.sequence[j+1])
+                        + data.getDistance(s.sequence[i-1], s.sequence[i+1]) + data.getDistance(s.sequence[j], s.sequence[i]);
             }
-            if (delta < 0) {
-                if (best_i > best_j) {
-                    s->sequence.insert(s->sequence.begin() + best_j, s->sequence[best_i]);
-                    s->sequence.erase(s->sequence.begin() + best_i + 1);
-                } else {
-                    s->sequence.insert(s->sequence.begin() + best_j + 1, s->sequence[best_i]);
-                    s->sequence.erase(s->sequence.begin() + best_i);
-                }
-                s->valorObj += bestDelta;
-                return true;
+            else if(j < i)
+            {
+                delta = -data.getDistance(s.sequence[j-1], s.sequence[j]) - data.getDistance(s.sequence[j], s.sequence[j+1])
+                        - data.getDistance(s.sequence[i], s.sequence[i+1]) + data.getDistance(s.sequence[j], s.sequence[i+1])
+                        + data.getDistance(s.sequence[j-1], s.sequence[j+1]) + data.getDistance(s.sequence[i], s.sequence[j]);
             }
-            return false;
-
-        case 2: //OR-OPT-2
-            for (int i = 1; i < s->sequence.size() - 2; i++) {
-                int vi = s->sequence[i];
-                int vi_next = s->sequence[i + 1];
-                int vi_next2 = s->sequence[i + 2];
-                int vi_prev = s->sequence[i - 1];
-
-                for (int j = 1; j < s->sequence.size() - 1; j++) {
-                    int vj = s->sequence[j];
-                    int vj_next = s->sequence[j + 1];
-                    int vj_next2 = s->sequence[j + 2];
-                    int vj_prev = s->sequence[j - 1];
-
-                    if (j > i) {
-                        delta = -data.getDistance(vi_prev, vi) - data.getDistance(vi_next, vi_next2) -
-                                data.getDistance(vj_prev, vj)
-                                - data.getDistance(vj_next, vj_next2) + data.getDistance(vi_prev, vj) +
-                                data.getDistance(vj_next, vi_next2)
-                                + data.getDistance(vj_prev, vi) + data.getDistance(vi_next, vj_next2);
-                    } else if (j < i) {
-                        delta = -data.getDistance(vj_prev, vj) - data.getDistance(vj_next, vj_next2) -
-                                data.getDistance(vi_prev, vi)
-                                - data.getDistance(vi_next, vi_next2) + data.getDistance(vi_prev, vj) +
-                                data.getDistance(vj_next, vi_next2)
-                                + data.getDistance(vj_prev, vi) + data.getDistance(vi_next, vj_next2);
-                    } else if (i == j || i == j - 1 || i == j + 1) {
-                        delta = 0;
-                        continue;
-                    }
-
-                    if (delta < bestDelta) {
-                        bestDelta = delta;
-                        best_i = i;
-                        best_j = j;
-                    }
-                }
+            else if(i == j-1)
+            {
+                delta = -data.getDistance(s.sequence[i-1], s.sequence[i]) - data.getDistance(s.sequence[j], s.sequence[j+1])
+                        + data.getDistance(s.sequence[i-1], s.sequence[j]) + data.getDistance(s.sequence[i], s.sequence[j+1]);
             }
-            if (bestDelta < 0) {
-                if (best_i > best_j) {
-                    s->sequence.insert(s->sequence.begin() + best_j + 1, s->sequence[best_i]);
-                    s->sequence.insert(s->sequence.begin() + best_j + 2, s->sequence[best_i + 1]);
-                    s->sequence.erase(s->sequence.begin() + best_i);
-                    s->sequence.erase(s->sequence.begin() + best_i + 1);
-                } else {
-                    s->sequence.insert(s->sequence.begin() + best_j, s->sequence[best_i]);
-                    s->sequence.insert(s->sequence.begin() + best_j + 1, s->sequence[best_i + 2]);
-                    s->sequence.erase(s->sequence.begin() + best_i);
-                    s->sequence.erase(s->sequence.begin() + best_i + 2);
-                }
-                s->valorObj += bestDelta;
-                return true;
+            else
+            {
+                continue;
             }
-            return false;
-
-        case 3: //OR-OPT-3
-            for (int i = 1; i < s->sequence.size() - 3; i++) {
-                int vi = s->sequence[i];
-                int vi_next2 = s->sequence[i + 2];
-                int vi_next3 = s->sequence[i + 3];
-                int vi_prev = s->sequence[i - 1];
-
-                for (int j = 1; j < s->sequence.size() - 2; j++) {
-                    int vj = s->sequence[j];
-                    int vj_next2 = s->sequence[j + 2];
-                    int vj_next3 = s->sequence[j + 3];
-                    int vj_prev = s->sequence[j - 1];
-
-                    if (j > i) {
-                        delta = -data.getDistance(vi_prev, vi) - data.getDistance(vi_next2, vi_next3) -
-                                data.getDistance(vj_prev, vj)
-                                - data.getDistance(vj_next2, vj_next3) + data.getDistance(vi_prev, vj) +
-                                data.getDistance(vj_next2, vi_next3)
-                                + data.getDistance(vj_prev, vi) + data.getDistance(vi_next2, vj_next3);
-                    } else if (j < i) {
-
-                        delta = -data.getDistance(vj_prev, vj) - data.getDistance(vj_next2, vj_next3) -
-                                data.getDistance(vi_prev, vi)
-                                - data.getDistance(vi_next2, vi_next3) + data.getDistance(vi_prev, vj) +
-                                data.getDistance(vj_next2, vi_next3)
-                                + data.getDistance(vj_prev, vi) + data.getDistance(vi_next2, vj_next3);
-                    } else if (i == j || i == j - 2 || i == j + 2) {
-                        delta = 0;
-                        continue;
-                    }
-
-                    if (delta < bestDelta) {
-                        bestDelta = delta;
-                        best_i = i;
-                        best_j = j;
-                    }
-                }
+            if(delta < best_delta)
+            {
+                best_delta = delta;
+                best_i = i;
+                best_j = j;
             }
-            if (bestDelta < 0) {
-                if (best_i > best_j) {
-                    s->sequence.insert(s->sequence.begin() + best_j + 1, s->sequence[best_i]);
-                    s->sequence.insert(s->sequence.begin() + best_j + 2, s->sequence[best_i + 1]);
-                    s->sequence.insert(s->sequence.begin() + best_j + 3, s->sequence[best_i + 2]);
-                    s->sequence.erase(s->sequence.begin() + best_i);
-                    s->sequence.erase(s->sequence.begin() + best_i + 1);
-                    s->sequence.erase(s->sequence.begin() + best_i + 2);
-                } else {
-                    s->sequence.insert(s->sequence.begin() + best_j, s->sequence[best_i + 1]);
-                    s->sequence.insert(s->sequence.begin() + best_j + 1, s->sequence[best_i + 2]);
-                    s->sequence.insert(s->sequence.begin() + best_j + 2, s->sequence[best_i + 3]);
-                    s->sequence.erase(s->sequence.begin() + best_i + 1);
-                    s->sequence.erase(s->sequence.begin() + best_i + 2);
-                    s->sequence.erase(s->sequence.begin() + best_i + 3);
-                }
-                s->valorObj += bestDelta;
-                return true;
+        }
+    }
+    if(best_delta < 0)
+    {
+        if(best_i > best_j)
+        {
+            s.sequence.insert(s.sequence.begin() + best_j, s.sequence[best_i]);
+            s.sequence.erase(s.sequence.begin() + best_i + 1);
+        }
+        else
+        {
+            s.sequence.insert(s.sequence.begin() + best_j + 1, s.sequence[best_i]);
+            s.sequence.erase(s.sequence.begin() + best_i);
+        }
+
+        s.valorObj += best_delta;
+        return true;
+    }
+    return false;
+
+    case 2: //OR-OPT2
+    for(i = 1; i < s.sequence.size() - 2; i++)
+    {
+        for(j = 1; j < s.sequence.size() - 2; j++)
+        {
+            if(j > i)
+            {
+                delta = -data.getDistance(s.sequence[i-1], s.sequence[i]) - data.getDistance(s.sequence[i+1], s.sequence[i+2])
+                        - data.getDistance(s.sequence[j], s.sequence[j+1]) + data.getDistance(s.sequence[i-1], s.sequence[i+2])
+                        + data.getDistance(s.sequence[j], s.sequence[i]) + data.getDistance(s.sequence[i+1], s.sequence[j+1]);
             }
-            return false;
+            else if(j < i)
+            {
+                delta = -data.getDistance(s.sequence[j-1], s.sequence[j]) - data.getDistance(s.sequence[j+1], s.sequence[j+2])
+                        - data.getDistance(s.sequence[i], s.sequence[i+1]) + data.getDistance(s.sequence[j-1], s.sequence[j+2])
+                        + data.getDistance(s.sequence[i], s.sequence[j]) + data.getDistance(s.sequence[j+1], s.sequence[i+1]);
+            }
+            else if(i == j-1)
+            {
+                delta = -data.getDistance(s.sequence[i-1], s.sequence[i]) - data.getDistance(s.sequence[i+1], s.sequence[j])
+                        + data.getDistance(s.sequence[i-1], s.sequence[j]) + data.getDistance(s.sequence[i+1], s.sequence[j+1]);
+            }
+            else
+            {
+                continue;
+            }
+
+            if(delta < best_delta)
+            {
+                best_delta = delta;
+                best_i = i;
+                best_j = j;
+            }
+        }
+    }
+    if(best_delta < 0)
+    {
+        if(best_j > best_i)
+        {
+
+            s.sequence.insert(s.sequence.begin() + best_j + 1, s.sequence[best_i]);
+            s.sequence.insert(s.sequence.begin() + best_j + 2, s.sequence[best_i + 1]);
+            s.sequence.erase(s.sequence.begin() + best_i);
+            s.sequence.erase(s.sequence.begin() + best_i + 1);
+        }
+        else
+        {
+            s.sequence.insert(s.sequence.begin() + best_j - 1, s.sequence[best_i + 1]);
+            s.sequence.insert(s.sequence.begin() + best_j - 2, s.sequence[best_i]);
+            s.sequence.erase(s.sequence.begin() + best_i + 1);
+            s.sequence.erase(s.sequence.begin() + best_i);
+        }
+
+        s.valorObj += best_delta;
+        return true;
+    }
+    return false;
     }
     return false;
 }
 
-void BuscaLocal(Solucao *s, Data &data)
+void BuscaLocal(Solucao &s, Data &data)
 {
-    vector<int> NL = {1, 2, 3 , 4, 5};  
+    vector<int> NL = {1, 2};  
     bool improved = false;
     
     while(NL.empty() == false)
@@ -445,21 +394,22 @@ void BuscaLocal(Solucao *s, Data &data)
             case 2:
                 improved = bestImprovement2Opt(s, data);
                 break;
-            case 3:
-                improved = bestImprovementOrOpt(s, data, 1);
-                break;
-            case 4:
-                improved = bestImprovementOrOpt(s, data, 2);
-                break;
-            case 5:
-            {
-                improved = bestImprovementOrOpt(s, data, 3);
-                break;
-            }
+            //   case 3:
+            //       improved = bestImprovementOrOpt(s, data, 1);
+            //       break;
+            //   case 4:
+            //       improved = bestImprovementOrOpt(s, data, 2);
+            //       break;
+            // case 5:
+            // {
+            //     improved = bestImprovementOrOpt(s, data, 3);
+            //     break;
+            // }
         }
+        bool improved = false;
         if(improved)
         {
-            NL = {1, 2, 3 , 4, 5};
+            NL = {1, 2};
         }
         else
         {
@@ -468,17 +418,88 @@ void BuscaLocal(Solucao *s, Data &data)
     }
 }
 
-//Solucao Pertubacao(Solucao s, Data &data)
-//{
-  //  Solucao pert = s;
 
-//    int n = pert.sequence.size();
-  //  int t1 = 2;
-    //int t2 = (n - 1)/10;
+Solucao Perturbacao(const Solucao s, Data &data)
+{
+    Solucao pert = s;
+    int i = 0, j = 0;
+
+    int n = pert.sequence.size();
+    int V = (n-1)/10 + 1; // no minínimo 2
+
+    int tam1, tam2;
+    bool mesmo = 1;
 
 
-    //return pert;
-//}
+    //tamanho das subsequencias
+    if(V > 2)
+    {
+        tam1 = rand() % ((V-1)/10) + 2;
+        tam2 = rand() % ((V-1)/10) + 2;
+    }
+    
+    //escolher os indices de inicio das subsequencias
+
+    i = rand() % (n - tam1 - 1) + tam1;
+    
+    do // não se sobrepor
+    {
+        j = rand() % (n - tam2 - 1) + tam2;
+        if((((i + tam1 - 1) < j) || ((j + tam2 - 1) < i)) && i+tam1 -1 < n && j+tam2-1 < n)
+        {
+            break;
+        }
+    } while (mesmo);
+    
+
+    //pegar as subsequencias
+
+    int vi = pert.sequence[i];
+    int vi_next = pert.sequence[i + tam1];
+    int vi_quase = pert.sequence[i + tam1 - 1];
+    int vi_prev = pert.sequence[i-1];
+
+        
+    int vj = pert.sequence[j];
+    int vj_next = pert.sequence[j + tam2];
+    int vj_quase = pert.sequence[j + tam2 - 1];
+    int vj_prev = pert.sequence[j-1];
+
+
+    if(j - (i + tam1 - 1) == 1)
+    {
+        pert.valorObj += -data.getDistance(vi_prev, vi) - data.getDistance(vj_prev, vj) - data.getDistance(vj_quase, vj_next)
+                         +data.getDistance(vi_prev, vj) + data.getDistance(vi_next, vj_quase) + data.getDistance(vj_prev, vi);
+    }
+    else if(i - (j + tam2 - 1) == 1)
+    {
+        pert.valorObj += -data.getDistance(vj_prev, vj) - data.getDistance(vi_prev, vi) - data.getDistance(vi_quase, vi_next)
+                         +data.getDistance(vj_prev, vi) + data.getDistance(vj_next, vi_quase) + data.getDistance(vi_prev, vj);
+    }
+    else
+    {
+       pert.valorObj += -data.getDistance(vi_prev, vi) - data.getDistance(vj_prev,vj) - data.getDistance(vi_quase, vi_next)
+                      - data.getDistance(vj_quase, vj_next) + data.getDistance(vi_prev, vj) + data.getDistance(vj_quase, vi_next)
+                      + data.getDistance(vj_prev, vi) + data.getDistance(vi_quase, vj_next);
+    }
+
+    if(i < j)
+    {
+        pert.sequence.insert(pert.sequence.begin() + j, pert.sequence.begin() + i, pert.sequence.begin() + i + tam1);
+        pert.sequence.erase(pert.sequence.begin() + i, pert.sequence.begin() + i + tam1);
+        pert.sequence.insert(pert.sequence.begin() + i, pert.sequence.begin() + j + tam2, pert.sequence.begin() + j + tam2 + tam2);
+        pert.sequence.erase(pert.sequence.begin() + j + tam2, pert.sequence.begin() + j + tam2 + tam2);
+    }
+    else if(i > j)
+    {
+        pert.sequence.insert(pert.sequence.begin() + i, pert.sequence.begin() + j, pert.sequence.begin() + j + tam2);
+        pert.sequence.erase(pert.sequence.begin() + j, pert.sequence.begin() + j + tam2);
+        pert.sequence.insert(pert.sequence.begin() + j, pert.sequence.begin() + i + tam1, pert.sequence.begin() + i + tam1 + tam1);
+        pert.sequence.erase(pert.sequence.begin() + i + tam1, pert.sequence.begin() + i + tam1 + tam1);
+    }
+
+    return pert;
+}
 
 
 Solucao ILS(int maxIter, int maxIterIls,int n,  Data &data)
@@ -486,17 +507,21 @@ Solucao ILS(int maxIter, int maxIterIls,int n,  Data &data)
     Solucao bestOfAll;
 
     bestOfAll.valorObj = INFINITY;
+    int iterILS;
 
     for(int i = 0; i < maxIter; i++)
     {
         Solucao s = Construcao(data, n);
+        
         Solucao best = s;
-
-        int iterILS = 0;
-
+    
+        iterILS = 0;
+    
         while (iterILS <= maxIterIls)
         {
-            BuscaLocal(&s, data);
+            
+            BuscaLocal(s, data);
+            calcularValorObj(&s, data);
             if(s.valorObj < best.valorObj)
             {
                 best = s;
@@ -511,19 +536,20 @@ Solucao ILS(int maxIter, int maxIterIls,int n,  Data &data)
             bestOfAll = best;
         }
     }
+    calcularValorObj(&bestOfAll, data);
     return bestOfAll;
 }
 
 int main(int argc, char** argv) 
 {
 
-    Solucao best;
-    int maxIter = 50;
+    Solucao constr;
+    Solucao ilts;
     int maxIterIls;
     double cto = 0.0;
     auto data = Data(argc, argv[1]);
     data.read();
-    int n = data.getDimension();
+    size_t n = data.getDimension();
 
     if(n >= 150)
     {
@@ -534,18 +560,17 @@ int main(int argc, char** argv)
         maxIterIls = n;
     }
 
-    cout << "Dimension: " << n << endl;
-    cout << "DistanceMatrix: " << endl;
-    data.printMatrixDist();
+    // cout << "Dimension: " << n << endl;
+    // cout << "DistanceMatrix: " << endl;
+    // data.printMatrixDist();
 
     //cout << "Exemplo de Solucao s = ";
-      
-    best =  Construcao(data, n);
-    // calcularValorObj(&best, data);
-    //cout << n << " -> " << 1 << endl;
-    exibirSolucao(&best);
-    calcularValorObj(best, data);
+
     
+
+    ilts = ILS(50, maxIterIls, n, data);
+    exibirSolucao(&ilts);
+    calcularValorObj(&ilts, data);
 
     return 0;
 }
