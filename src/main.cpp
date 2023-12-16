@@ -356,18 +356,18 @@ bool bestImprovementOrOpt(Solucao &s, Data &data, int n)
         if(best_j > best_i)
         {
 
-            s.sequence.insert(s.sequence.begin() + best_j + 1, s.sequence[best_i]);
-            s.sequence.insert(s.sequence.begin() + best_j + 2, s.sequence[best_i + 1]);
+            s.sequence.insert(s.sequence.begin() + best_j, s.sequence[best_i]);
+            s.sequence.insert(s.sequence.begin() + best_j + 1, s.sequence[best_i + 1]);
             s.sequence.erase(s.sequence.begin() + best_i);
             s.sequence.erase(s.sequence.begin() + best_i + 1);
         }
         else
         {
-            s.sequence.insert(s.sequence.begin() + best_j - 1, s.sequence[best_i + 1]);
-            s.sequence.insert(s.sequence.begin() + best_j - 2, s.sequence[best_i]);
+            s.sequence.insert(s.sequence.begin() + best_j - 1, s.sequence[best_i]);
+            s.sequence.insert(s.sequence.begin() + best_j, s.sequence[best_i + 1]);
             s.sequence.erase(s.sequence.begin() + best_i + 1);
             s.sequence.erase(s.sequence.begin() + best_i);
-        }
+        }   
 
         s.valorObj += best_delta;
         return true;
@@ -379,7 +379,7 @@ bool bestImprovementOrOpt(Solucao &s, Data &data, int n)
 
 void BuscaLocal(Solucao &s, Data &data)
 {
-    vector<int> NL = {1, 2};  
+    vector<int> NL = {1, 2, 3};  
     bool improved = false;
     
     while(NL.empty() == false)
@@ -394,12 +394,12 @@ void BuscaLocal(Solucao &s, Data &data)
             case 2:
                 improved = bestImprovement2Opt(s, data);
                 break;
-            //   case 3:
-            //       improved = bestImprovementOrOpt(s, data, 1);
-            //       break;
-            //   case 4:
-            //       improved = bestImprovementOrOpt(s, data, 2);
-            //       break;
+            case 3:
+               improved = bestImprovementOrOpt(s, data, 1);
+               break;
+           case 4:
+               improved = bestImprovementOrOpt(s, data, 2);
+               break;
             // case 5:
             // {
             //     improved = bestImprovementOrOpt(s, data, 3);
@@ -409,7 +409,7 @@ void BuscaLocal(Solucao &s, Data &data)
         bool improved = false;
         if(improved)
         {
-            NL = {1, 2};
+            NL = {1, 2, 3};
         }
         else
         {
@@ -566,9 +566,12 @@ int main(int argc, char** argv)
 
     //cout << "Exemplo de Solucao s = ";
 
-    
+    for(int i = 0; i < 10; i++)
+    {
+        ilts = ILS(50, maxIterIls, n, data);
+    }
 
-    ilts = ILS(50, maxIterIls, n, data);
+    
     exibirSolucao(&ilts);
     calcularValorObj(&ilts, data);
 
