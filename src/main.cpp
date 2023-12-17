@@ -4,8 +4,11 @@
 #include <random>
 #include <algorithm>
 #include <cmath>
+#include <ctime>
+#include <chrono>
 
 using namespace std;
+using namespace std::chrono;
 
 typedef struct Solucao
 {
@@ -477,30 +480,26 @@ Solucao Perturbacao(const Solucao s, Data &data)
     int i = 0, j = 0;
 
     int n = pert.sequence.size();
-    int V = (n-1)/10 + 2; // no minínimo 2
 
     int tam1, tam2;
     bool mesmo = 1;
-
-
-    //tamanho das subsequencias
-    if(V > 2)
-    {
-        tam1 = (rand() % ((V-1)/10)) + 2;
-        tam2 = (rand() % ((V-1)/10)) + 2;
-    }
     
-    //escolher os indices de inicio das subsequencias
-
-    i = rand() % (n - tam1 - 1) + tam1;
     
     do // não se sobrepor
     {
-        j = rand() % (n - tam2 - 1) + tam2;
+        
         if((((i + tam1 - 1) < j) || ((j + tam2 - 1) < i)) && i+tam1 -1 < n && j+tam2-1 < n)
         {
             break;
         }
+        //tamanho das subsequencias
+        tam1 = rand() %((int)ceil(n/10)) + 2;
+        tam2 = rand() %((int)ceil(n/10)) + 2;
+        
+        //escolher os indices de inicio das subsequencias
+        i = rand() % (n - 2) + 1;
+        j = rand() % (n - 2) + 1;
+
     } while (mesmo);
     
 
@@ -579,7 +578,7 @@ Solucao ILS(int maxIter, int maxIterIls,int n,  Data &data)
                 best = s;
                 iterILS = 0;
             }
-            //s = Perturbacao(best, data);
+          //  s = Perturbacao(best, data);
             iterILS++;
         }
 
@@ -595,10 +594,14 @@ Solucao ILS(int maxIter, int maxIterIls,int n,  Data &data)
 int main(int argc, char** argv) 
 {
 
+    srand(time(NULL));
+
     Solucao constr;
     Solucao ilts;
+
     int maxIterIls;
     double cto = 0.0;
+    
     auto data = Data(argc, argv[1]);
     data.read();
     size_t n = data.getDimension();
@@ -617,11 +620,17 @@ int main(int argc, char** argv)
     // data.printMatrixDist();
 
     //cout << "Exemplo de Solucao s = ";
+    auto start = high_resolution_clock::now();
     for(int k = 0; k < 10; k++)
     {
         ilts = ILS(50, maxIterIls, n, data);
     }
+    auto stop = high_resolution_clock::now();
+    auto elapsed = stop - start;
+    
     exibirSolucao(&ilts);
+    cout << "Tempo de execucao: " << duration_cast<milliseconds>(elapsed).count()/10 << "ms" << endl;
+    cout << "Valor: ";
     calcularValorObj(&ilts, data);
     
     return 0;
