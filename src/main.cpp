@@ -71,7 +71,7 @@ vector<InsertionInfo> calcularCustoInsercao(Solucao s, vector<int>& CL, Data &da
 
 vector<int> escolher3NosAleatorios(int dim)
 {
-    vector<int> nosEscolhidos(4);
+    vector<int> nosEscolhidos(5);
     int nos[3];
     bool mesmo;
 
@@ -79,6 +79,11 @@ vector<int> escolher3NosAleatorios(int dim)
     {
          
         nos[i] = rand() % dim + 1;
+        if(nos[i] == 1)
+        {
+            nos[i] = rand() % dim + 1;
+            
+        }
         mesmo = 1;
         while(mesmo)
         {
@@ -97,12 +102,27 @@ vector<int> escolher3NosAleatorios(int dim)
         }
     }
 
-    nosEscolhidos[0] = nos[0];
-    nosEscolhidos[1] = nos[1];
-    nosEscolhidos[2] = nos[2];
-    nosEscolhidos[3] = nos[0];
-
-
+    nosEscolhidos[0] = 1;
+    if(nos[0] == 1)
+    {
+        nos[0] = rand() % dim + 1;
+        nosEscolhidos[1] = nos[0];
+    }
+    else
+    {
+        nosEscolhidos[1] = nos[0];
+    }
+    nosEscolhidos[2] = nos[1];
+    if(nos[2] == 1)
+    {
+        nos[2] = rand() % dim + 1;
+        nosEscolhidos[3] = nos[2];
+    }
+    else
+    {
+        nosEscolhidos[3] = nos[2];
+    }
+    nosEscolhidos[4] = 1;
     
 
     return nosEscolhidos;
@@ -126,16 +146,15 @@ vector<int> restoDosNos(vector<int> sequence, int dim)
 {
     vector<int> CL(dim - (sequence.size() - 1));
     int index = 0;
-    for(int i = 1; i <= dim; i++)
+    for(int i = 1; i <=dim; i++)
     {
-        if(i != sequence[0] && i != sequence[1] && i != sequence[2])
-        {
-            CL[index++] = i;
-        }
+       if(i != sequence[0] && i != sequence[1] && i != sequence[2] && i != sequence[3])
+       {
+           CL[index++] = i;
+       }
     }
     return CL;
 }
-
 
 bool caroSouN(InsertionInfo a, InsertionInfo b)
 {
@@ -146,7 +165,7 @@ Solucao Construcao(Data &data, int dim)
 {
     double alpha;
     int selecionado, sla;
-    Solucao s = {{1,1}, 0.0};
+    Solucao s = {{}, 0.0};
     s.sequence = escolher3NosAleatorios(dim);
     vector <int> CL = restoDosNos(s.sequence, dim);
     while(!CL.empty())
@@ -479,13 +498,13 @@ Solucao Perturbacao(const Solucao s, Data &data)
     Solucao pert = s;
     int i = 0, j = 0;
 
-    int n = pert.sequence.size();
+    int n = pert.sequence.size() - 1;
 
     int tam1, tam2;
     bool mesmo = 1;
     
     
-    do // não se sobrepor
+    while(mesmo)// não se sobrepor
     {
         
         if((((i + tam1 - 1) < j) || ((j + tam2 - 1) < i)) && i+tam1 -1 < n && j+tam2-1 < n)
@@ -493,14 +512,14 @@ Solucao Perturbacao(const Solucao s, Data &data)
             break;
         }
         //tamanho das subsequencias
-        tam1 = rand() %((int)ceil(n/10)) + 2;
-        tam2 = rand() %((int)ceil(n/10)) + 2;
+        tam1 = rand() %((int)ceil(n-1/10)) + 2;
+        tam2 = rand() %((int)ceil(n-1/10)) + 2;
         
         //escolher os indices de inicio das subsequencias
         i = rand() % (n - 2) + 1;
         j = rand() % (n - 2) + 1;
 
-    } while (mesmo);
+    } 
     
 
     //pegar as subsequencias
@@ -578,7 +597,7 @@ Solucao ILS(int maxIter, int maxIterIls,int n,  Data &data)
                 best = s;
                 iterILS = 0;
             }
-          //  s = Perturbacao(best, data);
+            s = Perturbacao(best, data);
             iterILS++;
         }
 
@@ -608,7 +627,7 @@ int main(int argc, char** argv)
 
     if(n >= 150)
     {
-        maxIterIls = n/2;
+        maxIterIls = (n)/2;
     }
     else
     {
@@ -624,14 +643,15 @@ int main(int argc, char** argv)
     for(int k = 0; k < 10; k++)
     {
         ilts = ILS(50, maxIterIls, n, data);
+        cto += ilts.valorObj;
     }
     auto stop = high_resolution_clock::now();
     auto elapsed = stop - start;
     
     exibirSolucao(&ilts);
     cout << "Tempo de execucao: " << duration_cast<milliseconds>(elapsed).count()/10 << "ms" << endl;
-    cout << "Valor: ";
-    calcularValorObj(&ilts, data);
+    cout << "Valor: "<< cto/10 << endl;
+    
     
     return 0;
 }
