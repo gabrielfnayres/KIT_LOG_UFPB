@@ -35,15 +35,15 @@ void exibirSolucao(Solucao *s)
     cout << s->sequence.back() << endl;
 }
 
-void calcularValorObj(Solucao *s, Data &data)
+void calcularValorObj(Solucao &s, Data &data)
 {
-    s->valorObj = 0.0;
-    for(int i = 0; i < s->sequence.size() - 1; i++)
+    s.valorObj = 0.0;
+    for(int i = 0; i < s.sequence.size() - 1; i++)
     {
-        s->valorObj += data.getDistance(s->sequence[i], s->sequence[i+1]);
+        s.valorObj += data.getDistance(s.sequence[i], s.sequence[i+1]);
     }
 
-    cout << s->valorObj << endl;
+     cout << s.valorObj << endl;
 
 }
 
@@ -72,18 +72,14 @@ vector<InsertionInfo> calcularCustoInsercao(Solucao s, vector<int>& CL, Data &da
 vector<int> escolher3NosAleatorios(int dim)
 {
     vector<int> nosEscolhidos(5);
-    int nos[3];
+    int nos[4];
     bool mesmo;
 
-    for(int i = 0; i < 3; i++)
+    for(int i = 0; i < 4; i++)
     {
          
         nos[i] = rand() % dim + 1;
-        if(nos[i] == 1)
-        {
-            nos[i] = rand() % dim + 1;
-            
-        }
+        
         mesmo = 1;
         while(mesmo)
         {
@@ -92,7 +88,7 @@ vector<int> escolher3NosAleatorios(int dim)
         
             for(int j = 0; j < i; j++)
             {
-                if(nos[i] == nos[j])
+                if(nos[i] == nos[j] || nos[i] == 1)
                 {
                     nos[i] = rand() % dim + 1;
                     mesmo = 1;
@@ -103,25 +99,9 @@ vector<int> escolher3NosAleatorios(int dim)
     }
 
     nosEscolhidos[0] = 1;
-    if(nos[0] == 1)
-    {
-        nos[0] = rand() % dim + 1;
-        nosEscolhidos[1] = nos[0];
-    }
-    else
-    {
-        nosEscolhidos[1] = nos[0];
-    }
-    nosEscolhidos[2] = nos[1];
-    if(nos[2] == 1)
-    {
-        nos[2] = rand() % dim + 1;
-        nosEscolhidos[3] = nos[2];
-    }
-    else
-    {
-        nosEscolhidos[3] = nos[2];
-    }
+    nosEscolhidos[1] = nos[1];
+    nosEscolhidos[2] = nos[2];
+    nosEscolhidos[3] = nos[3];
     nosEscolhidos[4] = 1;
     
 
@@ -448,16 +428,13 @@ bool bestImprovementOrOpt(Solucao &s, Data &data, int n)
     return false;
 }
 
-void BuscaLocal(Solucao &s, Data &data, int a)
+void BuscaLocal(Solucao &s, Data &data)
 {
     vector<int> NL = {1, 2, 3, 4, 5};  
     bool improved = false;
-    int n;
-    int iterA = 0;
-    const int maxiter = a;
-    while(NL.empty() == false && iterA < maxiter)
+    while(!NL.empty())
     {
-        n = rand() % NL.size();
+        int n = rand() % NL.size();
   
         switch (NL[n])
         {
@@ -478,12 +455,12 @@ void BuscaLocal(Solucao &s, Data &data, int a)
                 break;
         }
 
-         
+         improved = false;
         
         if(improved)
         {
             NL = {1, 2, 3, 4, 5};
-            iterA++;
+            // iterA++;
         }
         else
         {
@@ -493,35 +470,43 @@ void BuscaLocal(Solucao &s, Data &data, int a)
 }
 
 
-Solucao Perturbacao(const Solucao s, Data &data)
+Solucao Perturbacao(Solucao s, Data &data, int dim)
 {
-    Solucao pert = s;
+    
     int i = 0, j = 0;
+    Solucao pert = s;
+    int n = dim - 1;
 
-    int n = pert.sequence.size() - 1;
-
-    int tam1, tam2;
+    int tam1 = 1, tam2 = 1;
     bool mesmo = 1;
+
+    int alpha = (((int)ceil(n-1/10))); 
     
-    
-    while(mesmo)// não se sobrepor
-    {
-        
-        if((((i + tam1 - 1) < j) || ((j + tam2 - 1) < i)) && i+tam1 -1 < n && j+tam2-1 < n)
+    while(mesmo){ 
+        if((((i + tam1 - 1) < j) || ((j + tam2 - 1) < i)) && i+tam1 -1 < n && j+tam2-1 < n) // evita zerar  
         {
             break;
         }
         //tamanho das subsequencias
-        tam1 = rand() %((int)ceil(n-1/10)) + 2;
-        tam2 = rand() %((int)ceil(n-1/10)) + 2;
+        tam1 = rand() % alpha + 2;
+        tam2 = rand() % alpha + 2;
+         if(alpha == 0)
+         {
+             tam1 = 2;
+             tam2 = 2;
+         }
+        
         
         //escolher os indices de inicio das subsequencias
         i = rand() % (n - 2) + 1;
         j = rand() % (n - 2) + 1;
 
-    } 
-    
-
+         alpha--; //melhorar o rand 
+    }
+    cout << "PERTUB: "  << endl;
+    cout << "TAM1: " << tam1 << endl;
+    cout << "TAM2: " << tam2 << endl;
+  
     //pegar as subsequencias
 
     int vi = pert.sequence[i];
@@ -553,7 +538,7 @@ Solucao Perturbacao(const Solucao s, Data &data)
                       + data.getDistance(vj_prev, vi) + data.getDistance(vi_quase, vj_next);
     }
 
-    if(i < j)
+    if(j > i)
     {
         pert.sequence.insert(pert.sequence.begin() + j, pert.sequence.begin() + i, pert.sequence.begin() + i + tam1);
         pert.sequence.erase(pert.sequence.begin() + i, pert.sequence.begin() + i + tam1);
@@ -567,8 +552,8 @@ Solucao Perturbacao(const Solucao s, Data &data)
         pert.sequence.insert(pert.sequence.begin() + j, pert.sequence.begin() + i + tam1, pert.sequence.begin() + i + tam1 + tam1);
         pert.sequence.erase(pert.sequence.begin() + i + tam1, pert.sequence.begin() + i + tam1 + tam1);
     }
-
-    return pert;
+    
+    return s;
 }
 
 
@@ -577,7 +562,7 @@ Solucao ILS(int maxIter, int maxIterIls,int n,  Data &data)
     Solucao bestOfAll;
 
     bestOfAll.valorObj = INFINITY;
-    int iterILS;
+   
 
     for(int i = 0; i < maxIter; i++)
     {
@@ -585,19 +570,21 @@ Solucao ILS(int maxIter, int maxIterIls,int n,  Data &data)
         
         Solucao best = s;
     
-        iterILS = 0;
+        int iterILS = 0;
     
         while (iterILS <= maxIterIls)
         {
             
-            BuscaLocal(s, data, n);
-            calcularValorObj(&s, data);
+            BuscaLocal(s, data);
+            calcularValorObj(s, data);
             if(s.valorObj < best.valorObj)
             {
                 best = s;
                 iterILS = 0;
             }
-            s = Perturbacao(best, data);
+            s = Perturbacao(best, data, n);
+           // cout << "Pertubação: " << s.valorObj << endl;
+            //cout << "contador: " << iterILS << endl;
             iterILS++;
         }
 
@@ -606,7 +593,8 @@ Solucao ILS(int maxIter, int maxIterIls,int n,  Data &data)
             bestOfAll = best;
         }
     }
-    calcularValorObj(&bestOfAll, data);
+    //cout << "best: " << bestOfAll.valorObj << endl;
+    calcularValorObj(bestOfAll, data);
     return bestOfAll;
 }
 
@@ -627,7 +615,7 @@ int main(int argc, char** argv)
 
     if(n >= 150)
     {
-        maxIterIls = (n)/2;
+        maxIterIls = n/2;
     }
     else
     {
@@ -639,19 +627,18 @@ int main(int argc, char** argv)
     // data.printMatrixDist();
 
     //cout << "Exemplo de Solucao s = ";
-    auto start = high_resolution_clock::now();
-    for(int k = 0; k < 10; k++)
-    {
+    auto start = steady_clock::now();
+    for(int k = 0; k < 10; k ++){
         ilts = ILS(50, maxIterIls, n, data);
         cto += ilts.valorObj;
     }
-    auto stop = high_resolution_clock::now();
-    auto elapsed = stop - start;
+    auto stop = steady_clock::now();
+    chrono::duration<double> elapsed = stop - start;
     
     exibirSolucao(&ilts);
-    cout << "Tempo de execucao: " << duration_cast<milliseconds>(elapsed).count()/10 << "ms" << endl;
-    cout << "Valor: "<< cto/10 << endl;
-    
-    
+    cout << "TIME " << (elapsed.count())/10 << " s" << endl;
+    cout << "COST " << cto/10 << endl;
+    //calcularValorObj(ilts, data);
+
     return 0;
 }
